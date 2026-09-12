@@ -68,15 +68,17 @@ def player_exists(user_id: int) -> bool:
     return result is not None
 
 
-def add_player(user_id: int, username: str):
+def add_player(user_id: int, username: str) -> bool:
     conn = get_connection()
     c = conn.cursor()
     c.execute(
         "INSERT OR IGNORE INTO players (user_id, username) VALUES (?, ?)",
         (user_id, username),
     )
+    added = c.rowcount > 0
     conn.commit()
     conn.close()
+    return added
 
 
 def remove_player(user_id: int) -> bool:

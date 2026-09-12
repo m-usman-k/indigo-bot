@@ -1,7 +1,10 @@
+import re
 import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
+
+MENTION_RE = re.compile(r"<@!?(\d+)>")
 
 
 class Verification(commands.Cog):
@@ -11,7 +14,7 @@ class Verification(commands.Cog):
     @app_commands.command(name="submit_image", description="Submit a raid screenshot for PVM points")
     @app_commands.describe(
         image="The raid screenshot",
-        players="Comma-separated list of all participants (e.g. Nathan, Jeff, Chris)"
+        players="Comma-separated names or @mentions of all participants (e.g. @Nathan, @Jeff, @Chris)"
     )
     async def submit_image(
         self,
@@ -19,11 +22,37 @@ class Verification(commands.Cog):
         image: discord.Attachment,
         players: str,
     ):
-        player = db.get_player(interaction.user.id)
-        if not player:
+        submitter = interaction.user
+        submitter_name = submitter.display_name or submitter.name
+        db.add_player(submitter.id, submitter_name)
+
+        mentioned_ids = [int(m) for m in MENTION_RE.findall(players)]
+        mentioned_members = []
+        seen = set()
+        for mid in mentioned_ids:
+            if mid != submitter.id and mid not in seen:
+                seen.add(mid)
+                member = interaction.guild.get_member(mid)
+                if member:
+                    mentioned_members.append(member)
+
+        if mentioned_members:
+            newly_added = []
+            for member in mentioned_members:
+                if db.add_player(member.id, member.display_name or member.name):
+                    newly_added.append(member)
+            player_list = [m.display_name or m.name for m in mentioned_members]
+        else:
+            player_list = [p.strip() for p in players.split(",") if p.strip()]
+            newly_added = []
+
+        if len(player_list) < 2:
             embed = discord.Embed(
-                title="❌ Not in Clan",
-                description="You are not in the clan roster. An admin must `/add_player` you first.",
+                title="❌ Invalid Player List",
+                description=(
+                    "Please provide at least 2 players (including yourself).\n"
+                    "You can use names or **@mentions**."
+                ),
                 color=discord.Color.red(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -41,16 +70,6 @@ class Verification(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        player_list = [p.strip() for p in players.split(",") if p.strip()]
-        if len(player_list) < 2:
-            embed = discord.Embed(
-                title="❌ Invalid Player List",
-                description="Please provide at least 2 players (including yourself).",
-                color=discord.Color.red(),
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
-
         sub_id = db.create_submission(
             user_id=interaction.user.id,
             image_url=image.url,
@@ -58,14 +77,21 @@ class Verification(commands.Cog):
             players=", ".join(player_list),
         )
 
+        description = (
+            f"**Submission ID:** `{sub_id}`\n"
+            f"**Submitted by:** {interaction.user.mention}\n"
+            f"**Players:** {', '.join(f'`{p}`' for p in player_list)}\n\n"
+            "An admin will review and assign points shortly."
+        )
+        if newly_added:
+            description += (
+                "\n**↳ Added to clan roster:** "
+                + ", ".join(m.mention for m in newly_added)
+            )
+
         embed = discord.Embed(
             title="✅ Submission Created",
-            description=(
-                f"**Submission ID:** `{sub_id}`\n"
-                f"**Submitted by:** {interaction.user.mention}\n"
-                f"**Players:** {', '.join(f'`{p}`' for p in player_list)}\n\n"
-                "An admin will review and assign points shortly."
-            ),
+            description=description,
             color=discord.Color.green(),
         )
         embed.set_image(url=image.url)
