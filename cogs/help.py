@@ -230,7 +230,10 @@ class HelpView(discord.ui.View):
     def __init__(self, current: str = "home"):
         super().__init__(timeout=120)
         self.current = current
-        self._update_buttons()
+        self._add_items()
+
+    def _add_items(self):
+        self.clear_items()
 
         options = [
             discord.SelectOption(
@@ -238,24 +241,19 @@ class HelpView(discord.ui.View):
                 value=cat,
                 description=f"View {CATEGORY_LABELS[cat]} commands",
                 emoji="↳",
-                default=(cat == current),
+                default=(cat == self.current),
             )
             for cat in CATEGORIES
         ]
-        select = HelpSelect(options=options)
-        self.add_item(select)
+        self.add_item(HelpSelect(options=options))
 
-    def _update_buttons(self):
-        self.children = [c for c in self.children if not isinstance(c, discord.ui.Button)]
         idx = CATEGORIES.index(self.current)
-
         prev_cat = CATEGORIES[idx - 1] if idx > 0 else CATEGORIES[-1]
         next_cat = CATEGORIES[idx + 1] if idx < len(CATEGORIES) - 1 else CATEGORIES[0]
 
         prev_btn = discord.ui.Button(
             style=discord.ButtonStyle.secondary,
             label=f"⬅ {CATEGORY_LABELS[prev_cat]}",
-            custom_id="help_prev",
         )
         prev_btn.callback = self.prev_callback
         self.add_item(prev_btn)
@@ -263,7 +261,6 @@ class HelpView(discord.ui.View):
         next_btn = discord.ui.Button(
             style=discord.ButtonStyle.secondary,
             label=f"{CATEGORY_LABELS[next_cat]} ➡",
-            custom_id="help_next",
         )
         next_btn.callback = self.next_callback
         self.add_item(next_btn)
@@ -279,23 +276,7 @@ class HelpView(discord.ui.View):
         await self.refresh(interaction)
 
     async def refresh(self, interaction: discord.Interaction):
-        self._update_buttons()
-
-        for item in self.children:
-            if isinstance(item, HelpSelect):
-                self.remove_item(item)
-
-        options = [
-            discord.SelectOption(
-                label=CATEGORY_LABELS[cat],
-                value=cat,
-                description=f"View {CATEGORY_LABELS[cat]} commands",
-                emoji="↳",
-                default=(cat == self.current),
-            )
-            for cat in CATEGORIES
-        ]
-        self.add_item(HelpSelect(options=options))
+        self._add_items()
 
         if self.current == "home":
             main_embed = build_home_embed()
