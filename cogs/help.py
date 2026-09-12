@@ -76,7 +76,9 @@ def build_category_embed(category: str):
                 "/my_points\n"
                 "↳ Quick view of your own points.\n"
                 "/leaderboard\n"
-                "↳ View top 10 players by total points."
+                "↳ View top 10 players by total points.\n"
+                "/roster\n"
+                "↳ Browse the whole clan roster with page navigation."
             ),
             inline=False,
         )
