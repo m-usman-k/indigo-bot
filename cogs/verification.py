@@ -17,9 +17,8 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
         placeholder="e.g. 50",
     )
 
-    def __init__(self, cog, submission_id: int):
-        super().__init__(timeout=180)
-        self.cog = cog
+    def __init__(self, submission_id: int):
+        super().__init__(timeout=None)
         self.submission_id = submission_id
 
     async def on_submit(self, interaction: discord.Interaction):
@@ -44,7 +43,17 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        await self.cog.accept_submission(interaction, self.submission_id, main_pts, part_pts)
+        cog = interaction.client.get_cog("Verification")
+        if cog is None:
+            embed = discord.Embed(
+                title="❌ Error",
+                description="The verification system is not available right now.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        await cog.accept_submission(interaction, self.submission_id, main_pts, part_pts)
 
     async def on_error(self, interaction: discord.Interaction, error):
         embed = discord.Embed(
@@ -56,9 +65,8 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
 
 
 class SubmissionView(discord.ui.View):
-    def __init__(self, cog, submission_id: int):
+    def __init__(self, submission_id: int):
         super().__init__(timeout=None)
-        self.cog = cog
         self.submission_id = submission_id
 
         accept = discord.ui.Button(
@@ -79,6 +87,9 @@ class SubmissionView(discord.ui.View):
         deny.callback = self.deny_callback
         self.add_item(deny)
 
+    def _cog(self, interaction: discord.Interaction):
+        return interaction.client.get_cog("Verification")
+
     async def accept_callback(self, interaction: discord.Interaction):
         sub = db.get_submission(self.submission_id)
         if sub is None or sub["status"] != "pending":
@@ -90,11 +101,20 @@ class SubmissionView(discord.ui.View):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        modal = PointsModal(self.cog, self.submission_id)
+        modal = PointsModal(self.submission_id)
         await interaction.response.send_modal(modal)
 
     async def deny_callback(self, interaction: discord.Interaction):
-        await self.cog.deny_submission(interaction, self.submission_id)
+        cog = self._cog(interaction)
+        if cog is None:
+            embed = discord.Embed(
+                title="❌ Error",
+                description="The verification system is not available right now.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        await cog.deny_submission(interaction, self.submission_id)
 
 
 def _review_embed(sub: dict, guild: discord.Guild, status: str = "pending"):
@@ -261,7 +281,7 @@ class Verification(commands.Cog):
             channel_id=channel_id,
         )
 
-        view = SubmissionView(self, sub_id)
+        view = SubmissionView(sub_id)
         embed = _review_embed(
             {
                 "id": sub_id,

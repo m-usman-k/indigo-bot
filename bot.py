@@ -3,7 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from database import init_db
+from database import init_db, get_pending_submissions
 
 load_dotenv()
 
@@ -19,8 +19,28 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     init_db()
+    register_submission_views()
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
+
+
+def register_submission_views():
+    from cogs.verification import SubmissionView
+
+    count = 0
+    for sub in get_pending_submissions():
+        if not sub["review_message_id"]:
+            continue
+        try:
+            bot.add_view(
+                SubmissionView(sub["id"]),
+                message_id=sub["review_message_id"],
+            )
+            count += 1
+        except Exception:
+            pass
+    if count:
+        print(f"Registered {count} persistent submission views")
 
 
 async def setup_hook():
