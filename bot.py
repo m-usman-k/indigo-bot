@@ -23,6 +23,8 @@ async def setup_hook():
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py") and not filename.startswith("_"):
             await bot.load_extension(f"cogs.{filename[:-3]}")
+    synced = await bot.tree.sync()
+    print(f"Synced {len(synced)} slash commands")
 
 bot.setup_hook = setup_hook
 
