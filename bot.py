@@ -1,5 +1,6 @@
 import os
 import discord
+from discord.ext import commands
 from dotenv import load_dotenv
 from database import init_db
 
@@ -9,7 +10,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 
-bot = discord.Client(intents=intents)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 @bot.event
