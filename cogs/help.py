@@ -188,6 +188,16 @@ def build_category_embed(category: str):
             inline=False,
         )
         embed.add_field(
+            name="PVM points",
+            value=(
+                "/award_pvm <user> <pts> [reason]\n"
+                "↳ Award PVM points to a player.\n"
+                "/set_pvm <user> <pts>\n"
+                "↳ Set a player's exact PVM points."
+            ),
+            inline=False,
+        )
+        embed.add_field(
             name="Community points",
             value=(
                 "/award_community <user> <pts> [reason]\n"

@@ -138,6 +138,86 @@ class Admin(commands.Cog):
         )
         await interaction.response.send_message(embed=embed)
 
+    @app_commands.command(name="award_pvm", description="Award PVM points to a player (admin only)")
+    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.describe(
+        user="The player to award points to",
+        points="Number of PVM points",
+        reason="Reason for the award"
+    )
+    async def award_pvm(
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member,
+        points: int,
+        reason: str = "No reason provided",
+    ):
+        player = db.get_player(user.id)
+        if not player:
+            embed = discord.Embed(
+                title="❌ Player Not Found",
+                description=f"{user.mention} is not in the clan roster.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        db.add_pvm_points(user.id, points)
+        updated = db.get_player(user.id)
+
+        embed = discord.Embed(
+            title="✅ PVM Points Awarded",
+            description=(
+                f"**{player['username']}** received `{points}` PVM points.\n\n"
+                f"**Reason:** {reason}\n"
+                f"**Total PVM Points:** `{updated['pvm_points']}`"
+            ),
+            color=discord.Color.green(),
+        )
+        embed.set_thumbnail(url=user.display_avatar.url)
+        await interaction.response.send_message(embed=embed)
+
+        try:
+            dm_embed = discord.Embed(
+                title="⚔️ PVM Points Awarded!",
+                description=(
+                    f"You received **{points}** PVM points.\n"
+                    f"**Reason:** {reason}\n"
+                    f"**Total:** {updated['pvm_points']}"
+                ),
+                color=discord.Color.green(),
+            )
+            await user.send(embed=dm_embed)
+        except discord.Forbidden:
+            pass
+
+    @app_commands.command(name="set_pvm", description="Set a player's PVM points (admin only)")
+    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.describe(user="The player", points="New PVM points value")
+    async def set_pvm(self, interaction: discord.Interaction, user: discord.Member, points: int):
+        player = db.get_player(user.id)
+        if not player:
+            embed = discord.Embed(
+                title="❌ Player Not Found",
+                description=f"{user.mention} is not in the clan roster.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        old = player["pvm_points"]
+        db.set_pvm_points(user.id, points)
+
+        embed = discord.Embed(
+            title="✅ PVM Points Updated",
+            description=(
+                f"**{player['username']}** PVM points: "
+                f"`{old}` → `{points}`"
+            ),
+            color=discord.Color.green(),
+        )
+        await interaction.response.send_message(embed=embed)
+
     @app_commands.command(name="add_item", description="Add an item with its point value (admin only)")
     @app_commands.checks.has_permissions(administrator=True)
     @app_commands.describe(name="Item name (e.g. Dragon Warhammer)", value="Point value")

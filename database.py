@@ -159,6 +159,17 @@ def set_community_points(user_id: int, points: int):
     conn.close()
 
 
+def set_pvm_points(user_id: int, points: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE players SET pvm_points = ? WHERE user_id = ?",
+        (points, user_id),
+    )
+    conn.commit()
+    conn.close()
+
+
 def image_already_submitted(image_hash: str) -> bool:
     conn = get_connection()
     c = conn.cursor()
