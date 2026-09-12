@@ -166,7 +166,17 @@ class Verification(commands.Cog):
 
         submitter = interaction.user
         submitter_name = submitter.display_name or submitter.name
-        db.add_player(submitter.id, submitter_name)
+        if db.get_player(submitter.id) is None:
+            embed = discord.Embed(
+                title="❌ Not in Clan Roster",
+                description=(
+                    "You are not on the clan roster yet.\n"
+                    "Ask an admin to run `/add_player` so you can submit and earn points."
+                ),
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
 
         mentioned_ids = []
         for m in MENTION_RE.findall(players):
@@ -200,11 +210,6 @@ class Verification(commands.Cog):
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
-
-        newly_added = []
-        for member in mentioned_members:
-            if db.add_player(member.id, member.display_name or member.name):
-                newly_added.append(member)
 
         player_list = [submitter_name] + [m.display_name or m.name for m in mentioned_members]
         participant_ids = [m.id for m in mentioned_members]
@@ -266,11 +271,6 @@ class Verification(commands.Cog):
             f"**Players:** {', '.join(f'`{p}`' for p in player_list)}\n\n"
             f"Sent to {channel.mention} for review."
         )
-        if newly_added:
-            description += (
-                "\n**↳ Added to clan roster:** "
-                + ", ".join(m.mention for m in newly_added)
-            )
 
         embed = discord.Embed(
             title="✅ Submission Sent",
@@ -375,15 +375,22 @@ class Verification(commands.Cog):
         submitter_id = sub["user_id"]
         participant_ids = [int(x) for x in (sub["participant_ids"] or "").split(",") if x]
 
-        if db.get_player(submitter_id) is None:
-            db.add_player(submitter_id, f"User_{submitter_id}")
+        awarded = []
+        missing = []
 
-        db.add_pvm_points(submitter_id, main_points)
+        if db.get_player(submitter_id) is not None:
+            db.add_pvm_points(submitter_id, main_points)
+            awarded.append((submitter_id, main_points, "main"))
+        else:
+            missing.append(submitter_id)
+
         for pid in participant_ids:
             if pid != submitter_id:
-                if db.get_player(pid) is None:
-                    db.add_player(pid, f"User_{pid}")
-                db.add_pvm_points(pid, participant_points)
+                if db.get_player(pid) is not None:
+                    db.add_pvm_points(pid, participant_points)
+                    awarded.append((pid, participant_points, "participant"))
+                else:
+                    missing.append(pid)
 
         db.update_submission_status(sub_id, "verified", interaction.user.id)
         conn = db.get_connection()
@@ -394,15 +401,16 @@ class Verification(commands.Cog):
         conn.commit()
         conn.close()
 
-        confirmed_lines = [
-            f"**#{sub_id} verified.**\n",
-            f"**Main player** (<@{submitter_id}>) received **`{main_points}`** PVM points.",
-        ]
-        for pid in participant_ids:
-            if pid != submitter_id:
-                confirmed_lines.append(
-                    f"**Participant** (<@{pid}>) received **`{participant_points}`** PVM points."
-                )
+        confirmed_lines = [f"**#{sub_id} verified.**\n"]
+        for pid, pts, role in awarded:
+            confirmed_lines.append(f"**{role}** ({pid}) received **`{pts}`** PVM points.")
+        if missing:
+            confirmed_lines.append(
+                "\n⚠️ **Not in roster, no points given:** "
+                + ", ".join(f"<@{pid}>" for pid in missing)
+                + "\nAdd them with `/add_player` first."
+            )
+
         confirm_embed = discord.Embed(
             title="✅ Submission Verified",
             description="\n".join(confirmed_lines),

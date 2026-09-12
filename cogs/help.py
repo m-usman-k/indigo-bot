@@ -31,7 +31,6 @@ def build_home_embed():
             "↳ Track **PVM Points** and **Community Points** for clan members\n"
             "↳ Accept raid screenshots and award points to everyone in the fight\n"
             "↳ Prevent duplicate screenshots with image hashing\n"
-            "↳ Auto-add mentioned players to the clan roster\n"
             "↳ Leaderboards, item tracking, and database export\n\n"
             "**Browse the guides:**\n"
             "↳ **Points** — how points work\n"
@@ -103,7 +102,7 @@ def build_category_embed(category: str):
                 "Run the command with your screenshot and **@mention every player** in the fight:\n"
                 "↳ `/submit_image <image> @Nathan @Jeff @Chris`\n\n"
                 "↳ **Max 10 players total** including yourself.\n"
-                "↳ Mentioned players are **automatically added** to the clan roster.\n"
+                "↳ You must be on the clan roster to submit (ask an admin to add you).\n"
                 "↳ Your screenshot hash is checked so the same image can't be submitted twice."
             ),
             inline=False,
@@ -148,7 +147,9 @@ def build_category_embed(category: str):
             value=(
                 "↳ **Accepted** — every player gets a DM with their points.\n"
                 "↳ **Denied** — the submitter gets a DM.\n"
-                "↳ The review embed is updated to show the final status."
+                "↳ The review embed is updated to show the final status.\n\n"
+                "⚠️ Players must be on the roster to receive points. "
+                "If someone isn't, add them with `/add_player` after accepting."
             ),
             inline=False,
         )
