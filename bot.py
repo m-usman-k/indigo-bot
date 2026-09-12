@@ -24,8 +24,10 @@ async def setup_hook():
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py") and not filename.startswith("_"):
             await bot.load_extension(f"cogs.{filename[:-3]}")
-    synced = await bot.tree.sync()
-    print(f"Synced {len(synced)} slash commands")
+    guild = discord.Object(id=1157664458370465813)
+    bot.tree.copy_global_to(guild=guild)
+    synced = await bot.tree.sync(guild=guild)
+    print(f"Synced {len(synced)} slash commands to guild {guild.id}")
 
 bot.setup_hook = setup_hook
 
