@@ -42,15 +42,16 @@ class RosterView(discord.ui.View):
         for i, p in enumerate(page_players, start=start + 1):
             total = p["pvm_points"] + p["community_points"]
             lines.append(
-                f"{i}. **{p['username']}** — `{total}` pts  `(PVM: {p['pvm_points']} | CMM: {p['community_points']})`"
+                f"`{i}.` <@{p['user_id']}>\n"
+                f"↳ `{total}` pts  `(PVM: {p['pvm_points']} | CMM: {p['community_points']})`"
             )
 
         embed = discord.Embed(
-            title=f"📋 Clan Roster ({len(self.players)} members)",
-            description="\n".join(lines) if lines else "No members.",
+            title=f"↳ Clan Roster ({len(self.players)} members)",
+            description="\n\n".join(lines) if lines else "No members.",
             color=discord.Color.purple(),
         )
-        embed.set_footer(text=f"Page {self.page + 1}/{self.max_page + 1} • Indigo Bot")
+        embed.set_footer(text=f"↳ Page {self.page + 1}/{self.max_page + 1} • Indigo Bot")
         return embed
 
     async def previous(self, interaction: discord.Interaction):
