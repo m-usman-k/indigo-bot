@@ -24,10 +24,8 @@ POINTS_COMMANDS = [
 ]
 
 VERIFICATION_COMMANDS = [
-    ("/submit_image <image> <players>", "↳ Submit a raid screenshot for PVM points."),
+    ("/submit_image <image> @players", "↳ Submit a raid screenshot; mention up to 5 players."),
     ("/pending", "↳ View pending submissions (admin)."),
-    ("/verify <id> <main_pts> <part_pts>", "↳ Approve a submission and award points (admin)."),
-    ("/deny <id>", "↳ Deny a submission (admin)."),
 ]
 
 ADMIN_COMMANDS = [
@@ -39,6 +37,7 @@ ADMIN_COMMANDS = [
     ("/remove_item <name>", "↳ Remove a tracked item."),
     ("/items", "↳ List all registered items."),
     ("/export", "↳ Download a spreadsheet of all player data."),
+    ("/setup_channel <channel>", "↳ Choose the channel where submissions get reviewed."),
     ("/sync", "↳ Force sync slash commands."),
 ]
 

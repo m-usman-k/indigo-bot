@@ -40,6 +40,13 @@ def init_db():
     """)
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            guild_id INTEGER PRIMARY KEY,
+            submissions_channel_id INTEGER
+        )
+    """)
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS items (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE,
@@ -50,6 +57,16 @@ def init_db():
     c.execute("""
         CREATE UNIQUE INDEX IF NOT EXISTS idx_image_hash ON submissions(image_hash)
     """)
+
+    migrations = [
+        ("submissions", "participant_ids", "TEXT DEFAULT ''"),
+        ("submissions", "review_message_id", "INTEGER"),
+        ("submissions", "channel_id", "INTEGER"),
+    ]
+    for table, column, definition in migrations:
+        existing = [r["name"] for r in c.execute(f"PRAGMA table_info({table})")]
+        if column not in existing:
+            c.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
     conn.commit()
     conn.close()
@@ -154,12 +171,23 @@ def image_already_submitted(image_hash: str) -> bool:
     return result is not None
 
 
-def create_submission(user_id: int, image_url: str, image_hash: str, players: str) -> int:
+def create_submission(
+    user_id: int,
+    image_url: str,
+    image_hash: str,
+    players: str,
+    participant_ids: list[int] | None = None,
+    review_message_id: int | None = None,
+    channel_id: int | None = None,
+) -> int:
     conn = get_connection()
     c = conn.cursor()
+    ids_str = ",".join(str(i) for i in (participant_ids or []))
     c.execute(
-        "INSERT INTO submissions (user_id, image_url, image_hash, players) VALUES (?, ?, ?, ?)",
-        (user_id, image_url, image_hash, players),
+        """INSERT INTO submissions
+           (user_id, image_url, image_hash, players, participant_ids, review_message_id, channel_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (user_id, image_url, image_hash, players, ids_str, review_message_id, channel_id),
     )
     sub_id = c.lastrowid
     conn.commit()
@@ -196,6 +224,29 @@ def update_submission_status(sub_id: int, status: str, reviewed_by: int):
     )
     conn.commit()
     conn.close()
+
+
+def set_submissions_channel(guild_id: int, channel_id: int):
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "INSERT OR REPLACE INTO settings (guild_id, submissions_channel_id) VALUES (?, ?)",
+        (guild_id, channel_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_submissions_channel(guild_id: int) -> Optional[int]:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute(
+        "SELECT submissions_channel_id FROM settings WHERE guild_id = ?",
+        (guild_id,),
+    )
+    row = c.fetchone()
+    conn.close()
+    return row["submissions_channel_id"] if row else None
 
 
 def add_item(name: str, value: int):
