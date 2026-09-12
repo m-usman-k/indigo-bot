@@ -240,7 +240,6 @@ class HelpView(discord.ui.View):
                 label=CATEGORY_LABELS[cat],
                 value=cat,
                 description=f"View {CATEGORY_LABELS[cat]} commands",
-                emoji="↳",
                 default=(cat == self.current),
             )
             for cat in CATEGORIES
