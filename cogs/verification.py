@@ -48,7 +48,12 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
         await self.cog.accept_submission(interaction, self.submission_id, main_pts, part_pts)
 
     async def on_error(self, interaction: discord.Interaction, error):
-        await interaction.response.send_message("Something went wrong.", ephemeral=True)
+        embed = discord.Embed(
+            title="❌ Error",
+            description="Something went wrong while processing your input.",
+            color=discord.Color.red(),
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class SubmissionView(discord.ui.View):
@@ -149,8 +154,11 @@ class Verification(commands.Cog):
         channel_id = db.get_submissions_channel(interaction.guild.id)
         if channel_id is None:
             embed = discord.Embed(
-                title="❌ No Review Channel",
-                description="Admins must run `/setup_channel` first to choose where submissions go.",
+                title="❌ Review Channel Not Setup",
+                description=(
+                    "The review channel has not been setup yet.\n"
+                    "An admin must run `/setup_channel <channel>` first so submissions have somewhere to go."
+                ),
                 color=discord.Color.red(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
