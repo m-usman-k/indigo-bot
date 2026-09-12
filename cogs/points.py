@@ -21,13 +21,6 @@ class RosterView(discord.ui.View):
         prev_btn.disabled = self.page <= 0
         self.add_item(prev_btn)
 
-        page_label = discord.ui.Button(
-            style=discord.ButtonStyle.secondary,
-            label=f"Page {self.page + 1}/{self.max_page + 1}",
-            disabled=True,
-        )
-        self.add_item(page_label)
-
         next_btn = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="➡", label="Next")
         next_btn.callback = self.next
         next_btn.disabled = self.page >= self.max_page
