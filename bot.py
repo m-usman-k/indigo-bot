@@ -19,13 +19,16 @@ async def on_ready():
     print("------")
 
 
+async def setup_hook():
+    for filename in os.listdir("./cogs"):
+        if filename.endswith(".py") and not filename.startswith("_"):
+            await bot.load_extension(f"cogs.{filename[:-3]}")
+
+bot.setup_hook = setup_hook
+
+
 @bot.command(name="ping")
 async def ping(ctx):
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
-
-
-for filename in os.listdir("./cogs"):
-    if filename.endswith(".py") and not filename.startswith("_"):
-        bot.load_extension(f"cogs.{filename[:-3]}")
 
 bot.run(TOKEN)
