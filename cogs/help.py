@@ -102,7 +102,7 @@ def build_category_embed(category: str):
             value=(
                 "Run the command with your screenshot and **@mention every player** in the fight:\n"
                 "↳ `/submit_image <image> @Nathan @Jeff @Chris`\n\n"
-                "↳ **Max 5 players total** including yourself.\n"
+                "↳ **Max 10 players total** including yourself.\n"
                 "↳ Mentioned players are **automatically added** to the clan roster.\n"
                 "↳ Your screenshot hash is checked so the same image can't be submitted twice."
             ),

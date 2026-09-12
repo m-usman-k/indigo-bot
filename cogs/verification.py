@@ -5,7 +5,7 @@ from discord.ext import commands
 import database as db
 
 MENTION_RE = re.compile(r"<@!?(\d+)>")
-MAX_PLAYERS = 5
+MAX_PLAYERS = 10
 
 
 class PointsModal(discord.ui.Modal, title="Assign Points"):
@@ -143,7 +143,7 @@ class Verification(commands.Cog):
     @app_commands.command(name="submit_image", description="Submit a raid screenshot for PVM points")
     @app_commands.describe(
         image="The raid screenshot",
-        players="Mention the players in the fight (you + up to 5 total, yourself included)",
+        players="Mention the players in the fight (you + up to 10 total, yourself included)",
     )
     async def submit_image(
         self,
