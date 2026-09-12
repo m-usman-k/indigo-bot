@@ -10,54 +10,78 @@ CATEGORY_LABELS = {
     "verification": "Verification",
     "admin": "Admin",
 }
+CATEGORY_DESCRIPTIONS = {
+    "home": "Welcome to the Indigo Bot help menu. Select a category from the dropdown below to view its commands.",
+    "points": "View and track player points across two categories: PVM Points and Community Points.",
+    "verification": "Submit raid screenshots for human verification and earn PVM points.",
+    "admin": "Manage players, items, and data. Requires admin permissions.",
+}
 
 
 def build_home_embed():
     embed = discord.Embed(
-        title="↳ Indigo Bot — Commands",
-        description=(
-            "Welcome to the **Indigo Bot** help menu.\n"
-            "Use the dropdown below to browse command categories."
-        ),
+        title="Indigo Bot — Commands",
         color=discord.Color.purple(),
     )
+
     embed.add_field(
-        name="↳ Points",
+        name="↳ Command Categories",
         value=(
             "```\n"
-            "/points [user]\n"
-            "/my_points\n"
-            "/leaderboard\n"
+            "Points\n"
+            "Verification\n"
+            "Admin\n"
             "```"
         ),
         inline=False,
     )
     embed.add_field(
-        name="↳ Verification",
+        name="↳ Points Category",
         value=(
-            "```\n"
-            "/submit_image <image> <players>\n"
-            "/pending\n"
-            "/verify <id> <main_pts> <part_pts>\n"
-            "/deny <id>\n"
-            "```"
+            "`/points [user]`\n"
+            "↳ View a player's PVM and Community points.\n"
+            "`/my_points`\n"
+            "↳ Quick view of your own points.\n"
+            "`/leaderboard`\n"
+            "↳ View top 10 players by total points."
         ),
         inline=False,
     )
     embed.add_field(
-        name="↳ Admin",
+        name="↳ Verification Category",
         value=(
-            "```\n"
-            "/add_player <user> <name>\n"
-            "/remove_player <user>\n"
-            "/award_community <user> <points> [reason]\n"
-            "/set_community <user> <points>\n"
-            "/add_item <name> <value>\n"
-            "/remove_item <name>\n"
-            "/items\n"
-            "/export\n"
-            "/sync\n"
-            "```"
+            "`/submit_image <image> <players>`\n"
+            "↳ Submit a raid screenshot for PVM points.\n"
+            "`/pending`\n"
+            "↳ View pending submissions (admin).\n"
+            "`/verify <id> <main_pts> <part_pts>`\n"
+            "↳ Approve a submission and award points (admin).\n"
+            "`/deny <id>`\n"
+            "↳ Deny a submission (admin)."
+        ),
+        inline=False,
+    )
+    embed.add_field(
+        name="↳ Admin Category",
+        value=(
+            "`/add_player <user> <name>`\n"
+            "↳ Add a player to the clan roster.\n"
+            "`/remove_player <user>`\n"
+            "↳ Remove a player from the roster.\n"
+            "`/award_community <user> <pts> [reason]`\n"
+            "↳ Award community points.\n"
+            "`/set_community <user> <pts>`\n"
+            "↳ Set a player's community points.\n"
+            "`/add_item <name> <value>`\n"
+            "↳ Register an item with its point value.\n"
+            "`/remove_item <name>`\n"
+            "↳ Remove a tracked item.\n"
+            "`/items`\n"
+            "↳ List all registered items.\n"
+            "`/export`\n"
+            "↳ Export all data as a spreadsheet.\n"
+            "`/sync`\n"
+            "↳ Force sync slash commands."
         ),
         inline=False,
     )
@@ -66,242 +90,199 @@ def build_home_embed():
 
 
 def build_category_embed(category: str):
+    color = discord.Color.purple()
+    label = CATEGORY_LABELS[category]
+
     if category == "points":
         embed = discord.Embed(
-            title="↳ Points Commands",
-            description="View and track player points across two categories.",
-            color=discord.Color.purple(),
+            title=f"{label} — Commands",
+            color=color,
         )
+        embed.description = "```\n" + CATEGORY_DESCRIPTIONS[category] + "\n```"
         embed.add_field(
-            name="↳ /points [user]",
+            name="`/points [user]`",
             value=(
-                "```\n"
-                "View a player's PVM Points and Community Points.\n"
-                "If no user is specified, shows your own.\n\n"
-                "Example:\n"
-                "/points @Nathan\n"
-                "```"
+                "↳ View a player's **PVM Points** and **Community Points**.\n"
+                "↳ If no user is specified, shows your own.\n"
+                "↳ **Example:** `/points @Nathan`"
             ),
             inline=False,
         )
         embed.add_field(
-            name="↳ /my_points",
+            name="`/my_points`",
             value=(
-                "```\n"
-                "Quick shortcut to view your own points.\n\n"
-                "Example:\n"
-                "/my_points\n"
-                "```"
+                "↳ Quick shortcut to view your own points.\n"
+                "↳ **Example:** `/my_points`"
             ),
             inline=False,
         )
         embed.add_field(
-            name="↳ /leaderboard",
+            name="`/leaderboard`",
             value=(
-                "```\n"
-                "Shows the top 10 players ranked by combined points.\n\n"
-                "Example:\n"
-                "/leaderboard\n"
-                "```"
+                "↳ Shows the top 10 players ranked by combined points.\n"
+                "↳ **Example:** `/leaderboard`"
             ),
             inline=False,
         )
 
     elif category == "verification":
         embed = discord.Embed(
-            title="↳ Verification Commands",
-            description="Submit raid screenshots for point verification.",
-            color=discord.Color.purple(),
+            title=f"{label} — Commands",
+            color=color,
         )
+        embed.description = "```\n" + CATEGORY_DESCRIPTIONS[category] + "\n```"
         embed.add_field(
-            name="↳ /submit_image <image> <players>",
+            name="`/submit_image <image> <players>`",
             value=(
-                "```\n"
-                "Upload a raid screenshot and tag all participants.\n"
-                "Image is checked for duplicates via hash.\n\n"
-                "Example:\n"
-                "/submit_image <screenshot> Nathan, Jeff, Chris, Mike\n"
-                "```"
+                "↳ Upload a raid screenshot and tag all participants.\n"
+                "↳ Image is checked for duplicates via hash.\n"
+                "↳ **Example:** `/submit_image <file> Nathan, Jeff, Chris`"
             ),
             inline=False,
         )
         embed.add_field(
-            name="↳ /pending",
+            name="`/pending`",
             value=(
-                "```\n"
-                "View all pending submissions awaiting review.\n"
-                "Admin only.\n\n"
-                "Example:\n"
-                "/pending\n"
-                "```"
+                "↳ View all pending submissions awaiting review.\n"
+                "↳ **Admin only.**"
             ),
             inline=False,
         )
         embed.add_field(
-            name="↳ /verify <id> <main_pts> <part_pts>",
+            name="`/verify <id> <main_pts> <part_pts>`",
             value=(
-                "```\n"
-                "Approve a submission and assign points.\n"
-                "  id          — Submission ID from /pending\n"
-                "  main_pts    — Points for the item receiver\n"
-                "  part_pts    — Points for each participant\n\n"
-                "Example:\n"
-                "/verify 3 500 50\n"
-                "```"
+                "↳ Approve a submission and assign points.\n"
+                "↳ `id` — submission ID from `/pending`.\n"
+                "↳ `main_pts` — points for the item receiver.\n"
+                "↳ `part_pts` — points for each participant.\n"
+                "↳ **Admin only.**\n"
+                "↳ **Example:** `/verify 3 500 50`"
             ),
             inline=False,
         )
         embed.add_field(
-            name="↳ /deny <id>",
+            name="`/deny <id>`",
             value=(
-                "```\n"
-                "Deny a submission.\n\n"
-                "Example:\n"
-                "/deny 3\n"
-                "```"
+                "↳ Deny a submission.\n"
+                "↳ **Admin only.**\n"
+                "↳ **Example:** `/deny 3`"
             ),
             inline=False,
         )
 
     elif category == "admin":
         embed = discord.Embed(
-            title="↳ Admin Commands",
-            description="Manage players, items, and data. Requires admin permissions.",
-            color=discord.Color.purple(),
+            title=f"{label} — Commands",
+            color=color,
         )
+        embed.description = "```\n" + CATEGORY_DESCRIPTIONS[category] + "\n```"
         embed.add_field(
             name="↳ Player Management",
             value=(
-                "```\n"
-                "/add_player <user> <name>\n"
-                "/remove_player <user>\n"
-                "/award_community <user> <points> [reason]\n"
-                "/set_community <user> <points>\n"
-                "```"
+                "`/add_player <user> <name>`\n"
+                "↳ Add a player to the clan roster.\n"
+                "`/remove_player <user>`\n"
+                "↳ Remove a player from the roster.\n"
+                "`/award_community <user> <pts> [reason]`\n"
+                "↳ Award community points to a player.\n"
+                "`/set_community <user> <pts>`\n"
+                "↳ Set a player's exact community points."
             ),
             inline=False,
         )
         embed.add_field(
             name="↳ Item Management",
             value=(
-                "```\n"
-                "/add_item <name> <value>\n"
-                "/remove_item <name>\n"
-                "/items\n"
-                "```"
+                "`/add_item <name> <value>`\n"
+                "↳ Register an item with its point value.\n"
+                "`/remove_item <name>`\n"
+                "↳ Remove a tracked item.\n"
+                "`/items`\n"
+                "↳ List all registered items."
             ),
             inline=False,
         )
         embed.add_field(
             name="↳ Data",
             value=(
-                "```\n"
-                "/export\n"
-                "/sync\n"
-                "```"
+                "`/export`\n"
+                "↳ Download a spreadsheet of all player data.\n"
+                "`/sync`\n"
+                "↳ Force sync slash commands."
             ),
             inline=False,
         )
 
+    embed.set_footer(text="Indigo Bot • OSRS Clan Points System")
     return embed
 
 
-def build_nav_embeds(current: str):
-    idx = CATEGORIES.index(current)
-    prev_cat = CATEGORIES[idx - 1] if idx > 0 else CATEGORIES[-1]
-    next_cat = CATEGORIES[idx + 1] if idx < len(CATEGORIES) - 1 else CATEGORIES[0]
-
-    prev_embed = discord.Embed(
-        title=f"⬅ ↳ {CATEGORY_LABELS[prev_cat]}",
-        description=f"Select dropdown to view **{CATEGORY_LABELS[prev_cat]}** commands.",
-        color=discord.Color.purple(),
-    )
-
-    next_embed = discord.Embed(
-        title=f"↳ {CATEGORY_LABELS[next_cat]} ➡",
-        description=f"Select dropdown to view **{CATEGORY_LABELS[next_cat]}** commands.",
-        color=discord.Color.purple(),
-    )
-
-    return prev_embed, next_embed
-
-
 class HelpView(discord.ui.View):
-    def __init__(self, current: str = "home"):
-        super().__init__(timeout=120)
-        self.current = current
-        self._add_items()
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.current = "home"
+        self._rebuild_components()
 
-    def _add_items(self):
+    def _rebuild_components(self):
         self.clear_items()
 
         options = [
             discord.SelectOption(
                 label=CATEGORY_LABELS[cat],
                 value=cat,
-                description=f"View {CATEGORY_LABELS[cat]} commands",
+                description=CATEGORY_DESCRIPTIONS[cat],
                 default=(cat == self.current),
             )
             for cat in CATEGORIES
         ]
-        self.add_item(HelpSelect(options=options))
+        select = discord.ui.Select(
+            placeholder="Select a category...",
+            options=options,
+            min_values=1,
+            max_values=1,
+        )
 
-        idx = CATEGORIES.index(self.current)
-        prev_cat = CATEGORIES[idx - 1] if idx > 0 else CATEGORIES[-1]
-        next_cat = CATEGORIES[idx + 1] if idx < len(CATEGORIES) - 1 else CATEGORIES[0]
+        async def select_callback(interaction: discord.Interaction):
+            self.current = select.values[0]
+            await self.update(interaction)
+
+        select.callback = select_callback
+        self.add_item(select)
 
         prev_btn = discord.ui.Button(
             style=discord.ButtonStyle.secondary,
-            label=f"⬅ {CATEGORY_LABELS[prev_cat]}",
+            emoji="⬅",
+            label="Previous",
         )
-        prev_btn.callback = self.prev_callback
+        prev_btn.callback = self.previous
         self.add_item(prev_btn)
 
         next_btn = discord.ui.Button(
             style=discord.ButtonStyle.secondary,
-            label=f"{CATEGORY_LABELS[next_cat]} ➡",
+            emoji="➡",
+            label="Next",
         )
-        next_btn.callback = self.next_callback
+        next_btn.callback = self.next
         self.add_item(next_btn)
 
-    async def prev_callback(self, interaction: discord.Interaction):
+    async def previous(self, interaction: discord.Interaction):
         idx = CATEGORIES.index(self.current)
-        self.current = CATEGORIES[idx - 1] if idx > 0 else CATEGORIES[-1]
-        await self.refresh(interaction)
+        self.current = CATEGORIES[idx - 1]
+        await self.update(interaction)
 
-    async def next_callback(self, interaction: discord.Interaction):
+    async def next(self, interaction: discord.Interaction):
         idx = CATEGORIES.index(self.current)
-        self.current = CATEGORIES[idx + 1] if idx < len(CATEGORIES) - 1 else CATEGORIES[0]
-        await self.refresh(interaction)
+        self.current = CATEGORIES[(idx + 1) % len(CATEGORIES)]
+        await self.update(interaction)
 
-    async def refresh(self, interaction: discord.Interaction):
-        self._add_items()
-
-        if self.current == "home":
-            main_embed = build_home_embed()
-        else:
-            main_embed = build_category_embed(self.current)
-
-        prev_embed, next_embed = build_nav_embeds(self.current)
-
-        await interaction.response.edit_message(
-            embeds=[main_embed, prev_embed, next_embed],
-            view=self,
+    async def update(self, interaction: discord.Interaction):
+        self._rebuild_components()
+        embed = (
+            build_home_embed()
+            if self.current == "home"
+            else build_category_embed(self.current)
         )
-
-
-class HelpSelect(discord.ui.Select):
-    def __init__(self, options):
-        super().__init__(
-            placeholder="Browse categories...",
-            options=options,
-            custom_id="help_category_select",
-        )
-
-    async def callback(self, interaction: discord.Interaction):
-        view: HelpView = self.view
-        view.current = self.values[0]
-        await view.refresh(interaction)
+        await interaction.response.edit_message(embed=embed, view=self)
 
 
 class Help(commands.Cog):
@@ -310,14 +291,9 @@ class Help(commands.Cog):
 
     @app_commands.command(name="help", description="Show all available commands")
     async def help(self, interaction: discord.Interaction):
-        view = HelpView(current="home")
-        main_embed = build_home_embed()
-        prev_embed, next_embed = build_nav_embeds("home")
-
-        await interaction.response.send_message(
-            embeds=[main_embed, prev_embed, next_embed],
-            view=view,
-        )
+        view = HelpView()
+        embed = build_home_embed()
+        await interaction.response.send_message(embed=embed, view=view)
 
 
 async def setup(bot):
