@@ -3,57 +3,42 @@ from discord import app_commands
 from discord.ext import commands
 
 
-CATEGORIES = ["home", "points", "verification", "admin"]
+CATEGORIES = ["home", "points", "submitting", "reviewing", "admin", "export"]
 CATEGORY_LABELS = {
     "home": "Home",
     "points": "Points",
-    "verification": "Verification",
-    "admin": "Admin",
+    "submitting": "Submit a Raid",
+    "reviewing": "Review Submissions",
+    "admin": "Admin Commands",
+    "export": "Database Export",
 }
 CATEGORY_DESCRIPTIONS = {
-    "home": "Welcome to Indigo Bot.",
-    "points": "View and track player points across two categories: PVM Points and Community Points.",
-    "verification": "Submit raid screenshots with @mentions. Admins review them in the review channel with Accept/Deny buttons.",
-    "admin": "Manage players, items, points, review channel, and data. Requires admin permissions.",
+    "home": "Everything you need to know about Indigo Bot.",
+    "points": "How points work and the commands to check them.",
+    "submitting": "Step-by-step guide to submitting a raid for points.",
+    "reviewing": "How admins review and approve submissions.",
+    "admin": "Every admin command explained.",
+    "export": "How to download the whole database as spreadsheets.",
 }
-
-POINTS_COMMANDS = [
-    ("/points [user]", "↳ View a player's PVM and Community points."),
-    ("/my_points", "↳ Quick view of your own points."),
-    ("/leaderboard", "↳ View top 10 players by total points."),
-]
-
-VERIFICATION_COMMANDS = [
-    ("/submit_image <image> @players", "↳ Submit a raid screenshot; mention up to 5 players."),
-    ("/pending", "↳ View pending submissions (admin)."),
-    ("/verify <id> <main_pts> <part_pts>", "↳ Manually approve a submission (admin)."),
-    ("/deny <id>", "↳ Manually deny a submission (admin)."),
-]
-
-ADMIN_COMMANDS = [
-    ("/add_player <user> <name>", "↳ Add a player to the clan roster."),
-    ("/remove_player <user>", "↳ Remove a player from the roster."),
-    ("/award_community <user> <pts> [reason]", "↳ Award community points to a player."),
-    ("/set_community <user> <pts>", "↳ Set a player's exact community points."),
-    ("/add_item <name> <value>", "↳ Register an item with its point value."),
-    ("/remove_item <name>", "↳ Remove a tracked item."),
-    ("/items", "↳ List all registered items."),
-    ("/export", "↳ DMs you the whole database as spreadsheet files."),
-    ("/setup_channel <channel>", "↳ Choose the channel where submissions get reviewed."),
-    ("/sync", "↳ Force sync slash commands."),
-]
 
 
 def build_home_embed():
     embed = discord.Embed(
         title="Indigo Bot",
         description=(
-            "A clan management bot for Oldschool RuneScape.\n\n"
-            "**Features:**\n"
-            "↳ Track PVM Points and Community Points for clan members\n"
-            "↳ Submit raid screenshots; admins review with ✅ Accept / ❌ Deny buttons\n"
-            "↳ Leaderboards, item tracking, and DM database export\n\n"
-            "**Categories:** Points, Verification, Admin\n"
+            "A clan management bot for **Oldschool RuneScape**.\n\n"
+            "**What can it do?**\n"
+            "↳ Track **PVM Points** and **Community Points** for clan members\n"
+            "↳ Accept raid screenshots and award points to everyone in the fight\n"
+            "↳ Prevent duplicate screenshots with image hashing\n"
+            "↳ Auto-add mentioned players to the clan roster\n"
+            "↳ Leaderboards, item tracking, and database export\n\n"
+            "**Browse the guides:**\n"
+            "↳ **Points** — how points work\n"
+            "↳ **Submit a Raid** — how to get points from fights\n"
+            "↳ **Review Submissions** — the admin review flow\n"
+            "↳ **Admin Commands** — full admin reference\n"
+            "↳ **Database Export** — get your data as spreadsheets\n\n"
             "Select a category from the dropdown below."
         ),
         color=discord.Color.purple(),
@@ -63,25 +48,202 @@ def build_home_embed():
 
 
 def build_category_embed(category: str):
+    color = discord.Color.purple()
+    label = CATEGORY_LABELS[category]
+
     if category == "points":
-        commands_list = POINTS_COMMANDS
-        footer = "Select another category from the dropdown below."
-    elif category == "verification":
-        commands_list = VERIFICATION_COMMANDS
-        footer = "Select another category from the dropdown below."
-    else:
-        commands_list = ADMIN_COMMANDS
-        footer = "Select another category from the dropdown below."
+        embed = discord.Embed(
+            title=f"{label} — Commands",
+            description=CATEGORY_DESCRIPTIONS[category],
+            color=color,
+        )
+        embed.add_field(
+            name="How points work",
+            value=(
+                "**PVM Points**\n"
+                "↳ Earned from raid submissions that get verified by an admin.\n"
+                "↳ The player with the drop earns the **main points**.\n"
+                "↳ Everyone else in the fight earns the **participant points**.\n\n"
+                "**Community Points**\n"
+                "↳ Awarded manually by admins for events, contributions, etc."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Commands",
+            value=(
+                "/points [user]\n"
+                "↳ View a player's PVM and Community points.\n"
+                "/my_points\n"
+                "↳ Quick view of your own points.\n"
+                "/leaderboard\n"
+                "↳ View top 10 players by total points."
+            ),
+            inline=False,
+        )
 
-    lines = [f"{name}\n{desc}" for name, desc in commands_list]
+    elif category == "submitting":
+        embed = discord.Embed(
+            title=f"{label} — Commands",
+            description=CATEGORY_DESCRIPTIONS[category],
+            color=color,
+        )
+        embed.add_field(
+            name="Step 1 — Setup",
+            value=(
+                "An admin must run:\n"
+                "↳ `/setup_channel <channel>` — choose where submissions get reviewed.\n\n"
+                "Without this, submissions cannot be sent."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Step 2 — Submit your raid",
+            value=(
+                "Run the command with your screenshot and **@mention every player** in the fight:\n"
+                "↳ `/submit_image <image> @Nathan @Jeff @Chris`\n\n"
+                "↳ **Max 5 players total** including yourself.\n"
+                "↳ Mentioned players are **automatically added** to the clan roster.\n"
+                "↳ Your screenshot hash is checked so the same image can't be submitted twice."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Step 3 — What happens next",
+            value=(
+                "↳ Your submission is posted to the review channel as an embed.\n"
+                "↳ An admin presses **Accept** or **Deny**.\n"
+                "↳ If accepted, you and every participant get their PVM points."
+            ),
+            inline=False,
+        )
 
-    embed = discord.Embed(
-        title=f"{CATEGORY_LABELS[category]} — Commands",
-        description=CATEGORY_DESCRIPTIONS[category],
-        color=discord.Color.purple(),
-    )
-    embed.add_field(name="Commands", value="\n\n".join(lines), inline=False)
-    embed.set_footer(text=footer)
+    elif category == "reviewing":
+        embed = discord.Embed(
+            title=f"{label} — Commands",
+            description=CATEGORY_DESCRIPTIONS[category],
+            color=color,
+        )
+        embed.add_field(
+            name="Step 1 — Set the review channel",
+            value=(
+                "↳ `/setup_channel <channel>` — choose where submissions appear.\n"
+                "↳ **Admin only.**"
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Step 2 — Review a submission",
+            value=(
+                "Submissions appear as embeds with the screenshot and the players mentioned.\n\n"
+                "↳ **✅ Accept** — a modal opens asking:\n"
+                "   ↳ points for the **main player** (the drop owner)\n"
+                "   ↳ points for **each participant**\n"
+                "↳ **❌ Deny** — the submission is marked denied."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Step 3 — Notifications",
+            value=(
+                "↳ **Accepted** — every player gets a DM with their points.\n"
+                "↳ **Denied** — the submitter gets a DM.\n"
+                "↳ The review embed is updated to show the final status."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Manual commands",
+            value=(
+                "/pending\n"
+                "↳ View all pending submissions.\n"
+                "/verify <id> <main_pts> <part_pts>\n"
+                "↳ Manually approve a submission and award points.\n"
+                "/deny <id>\n"
+                "↳ Manually deny a submission."
+            ),
+            inline=False,
+        )
+
+    elif category == "admin":
+        embed = discord.Embed(
+            title=f"{label} — Commands",
+            description=CATEGORY_DESCRIPTIONS[category],
+            color=color,
+        )
+        embed.add_field(
+            name="Player roster",
+            value=(
+                "/add_player <user> <name>\n"
+                "↳ Add a player to the clan roster.\n"
+                "/remove_player <user>\n"
+                "↳ Remove a player from the roster."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Community points",
+            value=(
+                "/award_community <user> <pts> [reason]\n"
+                "↳ Award community points to a player.\n"
+                "/set_community <user> <pts>\n"
+                "↳ Set a player's exact community points."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Items",
+            value=(
+                "/add_item <name> <value>\n"
+                "↳ Register an item with its point value.\n"
+                "/remove_item <name>\n"
+                "↳ Remove a tracked item.\n"
+                "/items\n"
+                "↳ List all registered items."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="Setup & maintenance",
+            value=(
+                "/setup_channel <channel>\n"
+                "↳ Choose the review channel for submissions.\n"
+                "/sync\n"
+                "↳ Force refresh the bot's slash commands.\n"
+                "/export\n"
+                "↳ DM yourself the whole database."
+            ),
+            inline=False,
+        )
+
+    elif category == "export":
+        embed = discord.Embed(
+            title=f"{label} — Commands",
+            description=CATEGORY_DESCRIPTIONS[category],
+            color=color,
+        )
+        embed.add_field(
+            name="How to export",
+            value=(
+                "Run:\n"
+                "↳ `/export` (admin) — the bot DMs you the spreadsheet files.\n\n"
+                "↳ Enable DMs from server members or the export will fail."
+            ),
+            inline=False,
+        )
+        embed.add_field(
+            name="What you get",
+            value=(
+                "**players.csv** — username, Discord ID, PVM points, community points, total\n"
+                "↳ One row per player on the roster.\n\n"
+                "**submissions.csv** — every submission with its status and awarded points\n"
+                "↳ Includes who submitted and who reviewed it.\n\n"
+                "**items.csv** — every registered item and its point value."
+            ),
+            inline=False,
+        )
+
+    embed.set_footer(text="Select another category from the dropdown below.")
     return embed
 
 
