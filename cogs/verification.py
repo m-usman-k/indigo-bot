@@ -1,11 +1,10 @@
-import re
 import discord
 from discord import app_commands
 from discord.ext import commands
 import database as db
 
-MENTION_RE = re.compile(r"<@!?(\d+)>")
 MAX_PLAYERS = 10
+COMMUNITY_BONUS = 5
 
 
 class PointsModal(discord.ui.Modal, title="Assign Points"):
@@ -109,8 +108,8 @@ def _review_embed(sub: dict, guild: discord.Guild, status: str = "pending"):
         title = f"✅ Verified — #{sub['id']}"
         footer = "Accepted by " + (f"<@{sub['reviewed_by']}>" if sub["reviewed_by"] else "admin")
         description = (
-            f"**Main player:** `{sub['pvm_points']}` PVM points\n"
-            f"**Each participant:** `{sub['participant_points']}` PVM points"
+            f"**Main player:** `{sub['pvm_points']}` PVM + `{COMMUNITY_BONUS}` Community points\n"
+            f"**Each participant:** `{sub['participant_points']}` PVM + `{COMMUNITY_BONUS}` Community points"
         )
     else:
         color = discord.Color.red()
@@ -143,13 +142,31 @@ class Verification(commands.Cog):
     @app_commands.command(name="submit_image", description="Submit a raid screenshot for PVM points")
     @app_commands.describe(
         image="The raid screenshot",
-        players="Mention the players in the fight (you + up to 10 total, yourself included)",
+        player1="Member 1 (up to 10 total)",
+        player2="Member 2 (up to 10 total)",
+        player3="Member 3 (up to 10 total)",
+        player4="Member 4 (up to 10 total)",
+        player5="Member 5 (up to 10 total)",
+        player6="Member 6 (up to 10 total)",
+        player7="Member 7 (up to 10 total)",
+        player8="Member 8 (up to 10 total)",
+        player9="Member 9 (up to 10 total)",
+        player10="Member 10 (up to 10 total)",
     )
     async def submit_image(
         self,
         interaction: discord.Interaction,
         image: discord.Attachment,
-        players: str,
+        player1: discord.Member = None,
+        player2: discord.Member = None,
+        player3: discord.Member = None,
+        player4: discord.Member = None,
+        player5: discord.Member = None,
+        player6: discord.Member = None,
+        player7: discord.Member = None,
+        player8: discord.Member = None,
+        player9: discord.Member = None,
+        player10: discord.Member = None,
     ):
         channel_id = db.get_submissions_channel(interaction.guild.id)
         if channel_id is None:
@@ -178,34 +195,33 @@ class Verification(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        mentioned_ids = []
-        for m in MENTION_RE.findall(players):
-            mid = int(m)
-            if mid != submitter.id and mid not in mentioned_ids:
-                mentioned_ids.append(mid)
+        supplied = [player1, player2, player3, player4, player5,
+                    player6, player7, player8, player9, player10]
 
         mentioned_members = []
-        for mid in mentioned_ids:
-            member = interaction.guild.get_member(mid)
-            if member:
-                mentioned_members.append(member)
+        seen = set()
+        for m in supplied:
+            if m is None or m.id in seen or m.id == submitter.id:
+                continue
+            seen.add(m.id)
+            mentioned_members.append(m)
 
         if len(mentioned_members) < 1:
             embed = discord.Embed(
                 title="❌ No Players Mentioned",
                 description=(
-                    "Mention at least 1 other player in the fight.\n"
-                    f"Max **{MAX_PLAYERS}** players total (including yourself)."
+                    "Select at least 1 other player in the fight.\n"
+                    f"Max **{MAX_PLAYERS}** other players allowed."
                 ),
                 color=discord.Color.red(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        if len(mentioned_members) + 1 > MAX_PLAYERS:
+        if len(mentioned_members) > MAX_PLAYERS:
             embed = discord.Embed(
                 title="❌ Too Many Players",
-                description=f"Max **{MAX_PLAYERS}** players total (including yourself).",
+                description=f"Max **{MAX_PLAYERS}** other players allowed.",
                 color=discord.Color.red(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -380,7 +396,8 @@ class Verification(commands.Cog):
 
         if db.get_player(submitter_id) is not None:
             db.add_pvm_points(submitter_id, main_points)
-            awarded.append((submitter_id, main_points, "main"))
+            db.add_community_points(submitter_id, COMMUNITY_BONUS)
+            awarded.append((submitter_id, main_points, COMMUNITY_BONUS, "main"))
         else:
             missing.append(submitter_id)
 
@@ -388,7 +405,8 @@ class Verification(commands.Cog):
             if pid != submitter_id:
                 if db.get_player(pid) is not None:
                     db.add_pvm_points(pid, participant_points)
-                    awarded.append((pid, participant_points, "participant"))
+                    db.add_community_points(pid, COMMUNITY_BONUS)
+                    awarded.append((pid, participant_points, COMMUNITY_BONUS, "participant"))
                 else:
                     missing.append(pid)
 
@@ -402,8 +420,10 @@ class Verification(commands.Cog):
         conn.close()
 
         confirmed_lines = [f"**#{sub_id} verified.**\n"]
-        for pid, pts, role in awarded:
-            confirmed_lines.append(f"**{role}** ({pid}) received **`{pts}`** PVM points.")
+        for pid, pts, cmm, role in awarded:
+            confirmed_lines.append(
+                f"**{role}** (<@{pid}>) received **`{pts}`** PVM + **`{cmm}`** Community points."
+            )
         if missing:
             confirmed_lines.append(
                 "\n⚠️ **Not in roster, no points given:** "
@@ -472,7 +492,7 @@ class Verification(commands.Cog):
                 title="🎉 Submission Accepted!",
                 description=(
                     f"Your submission `#{sub['id']}` was accepted.\n"
-                    f"You received **`{main_points}`** PVM points."
+                    f"You received **`{main_points}`** PVM + **`{COMMUNITY_BONUS}`** Community points."
                 ),
                 color=discord.Color.green(),
             )
@@ -490,7 +510,7 @@ class Verification(commands.Cog):
                     title="🎉 Submission Accepted!",
                     description=(
                         f"Your clan submission `#{sub['id']}` was accepted.\n"
-                        f"You received **`{participant_points}`** PVM points."
+                        f"You received **`{participant_points}`** PVM + **`{COMMUNITY_BONUS}`** Community points."
                     ),
                     color=discord.Color.green(),
                 )

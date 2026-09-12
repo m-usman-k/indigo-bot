@@ -64,7 +64,8 @@ def build_category_embed(category: str):
                 "↳ The player with the drop earns the **main points**.\n"
                 "↳ Everyone else in the fight earns the **participant points**.\n\n"
                 "**Community Points**\n"
-                "↳ Awarded manually by admins for events, contributions, etc."
+                "↳ Every raid gets an extra **`5` community points per player**.\n"
+                "↳ Admins can also award them manually for events, contributions, etc."
             ),
             inline=False,
         )
@@ -101,9 +102,9 @@ def build_category_embed(category: str):
         embed.add_field(
             name="Step 2 — Submit your raid",
             value=(
-                "Run the command with your screenshot and **@mention every player** in the fight:\n"
-                "↳ `/submit_image <image> @Nathan @Jeff @Chris`\n\n"
-                "↳ **Max 10 players total** including yourself.\n"
+                "Run the command and pick each player in the `player` options:\n"
+                "↳ `/submit_image <image> player1:@Nathan player2:@Jeff player3:@Chris`\n\n"
+                "↳ Up to **10 players** can be selected (plus yourself = 11 total).\n"
                 "↳ You must be on the clan roster to submit (ask an admin to add you).\n"
                 "↳ Your screenshot hash is checked so the same image can't be submitted twice."
             ),
@@ -140,6 +141,8 @@ def build_category_embed(category: str):
                 "↳ **✅ Accept** — a modal opens asking:\n"
                 "   ↳ points for the **main player** (the drop owner)\n"
                 "   ↳ points for **each participant**\n"
+                "↳ The main player gets their points + **`5` community**.\n"
+                "↳ Each participant gets their points + **`5` community**.\n"
                 "↳ **❌ Deny** — the submission is marked denied."
             ),
             inline=False,
