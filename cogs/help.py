@@ -13,8 +13,8 @@ CATEGORY_LABELS = {
 CATEGORY_DESCRIPTIONS = {
     "home": "Welcome to Indigo Bot.",
     "points": "View and track player points across two categories: PVM Points and Community Points.",
-    "verification": "Submit raid screenshots for human verification and earn PVM points.",
-    "admin": "Manage players, items, and data. Requires admin permissions.",
+    "verification": "Submit raid screenshots with @mentions. Admins review them in the review channel with Accept/Deny buttons.",
+    "admin": "Manage players, items, points, review channel, and data. Requires admin permissions.",
 }
 
 POINTS_COMMANDS = [
@@ -26,6 +26,8 @@ POINTS_COMMANDS = [
 VERIFICATION_COMMANDS = [
     ("/submit_image <image> @players", "↳ Submit a raid screenshot; mention up to 5 players."),
     ("/pending", "↳ View pending submissions (admin)."),
+    ("/verify <id> <main_pts> <part_pts>", "↳ Manually approve a submission (admin)."),
+    ("/deny <id>", "↳ Manually deny a submission (admin)."),
 ]
 
 ADMIN_COMMANDS = [
@@ -36,7 +38,7 @@ ADMIN_COMMANDS = [
     ("/add_item <name> <value>", "↳ Register an item with its point value."),
     ("/remove_item <name>", "↳ Remove a tracked item."),
     ("/items", "↳ List all registered items."),
-    ("/export", "↳ Download a spreadsheet of all player data."),
+    ("/export", "↳ DMs you the whole database as spreadsheet files."),
     ("/setup_channel <channel>", "↳ Choose the channel where submissions get reviewed."),
     ("/sync", "↳ Force sync slash commands."),
 ]
@@ -49,8 +51,8 @@ def build_home_embed():
             "A clan management bot for Oldschool RuneScape.\n\n"
             "**Features:**\n"
             "↳ Track PVM Points and Community Points for clan members\n"
-            "↳ Submit raid screenshots for human verification\n"
-            "↳ Leaderboards, item tracking, and data export\n\n"
+            "↳ Submit raid screenshots; admins review with ✅ Accept / ❌ Deny buttons\n"
+            "↳ Leaderboards, item tracking, and DM database export\n\n"
             "**Categories:** Points, Verification, Admin\n"
             "Select a category from the dropdown below."
         ),
