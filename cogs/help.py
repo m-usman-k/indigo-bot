@@ -164,9 +164,7 @@ def build_category_embed(category: str):
                 "/pending\n"
                 "↳ View all pending submissions.\n"
                 "/verify <id> <main_pts> <part_pts>\n"
-                "↳ Manually approve a submission and award points.\n"
-                "/deny <id>\n"
-                "↳ Manually deny a submission."
+                "↳ Manually approve a submission and award points."
             ),
             inline=False,
         )
