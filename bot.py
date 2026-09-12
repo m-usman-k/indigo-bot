@@ -2,19 +2,20 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from database import init_db
 
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
-intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 @bot.event
 async def on_ready():
+    init_db()
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
 
@@ -25,10 +26,5 @@ async def setup_hook():
             await bot.load_extension(f"cogs.{filename[:-3]}")
 
 bot.setup_hook = setup_hook
-
-
-@bot.command(name="ping")
-async def ping(ctx):
-    await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
 
 bot.run(TOKEN)
