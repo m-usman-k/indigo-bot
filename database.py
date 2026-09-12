@@ -215,6 +215,15 @@ def get_pending_submissions() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def get_all_submissions() -> list[dict]:
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("SELECT * FROM submissions ORDER BY created_at DESC")
+    rows = c.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def update_submission_status(sub_id: int, status: str, reviewed_by: int):
     conn = get_connection()
     c = conn.cursor()

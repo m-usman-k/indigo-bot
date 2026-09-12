@@ -196,32 +196,90 @@ class Admin(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     async def export(self, interaction: discord.Interaction):
         players = db.get_all_players()
+        submissions = db.get_all_submissions() if hasattr(db, "get_all_submissions") else []
+        items = db.get_all_items()
 
-        if not players:
+        if not players and not items:
             embed = discord.Embed(
                 title="❌ No Data",
-                description="No players in the database to export.",
+                description="No data in the database to export.",
                 color=discord.Color.red(),
             )
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
-        lines = ["Username,Discord ID,PVM Points,Community Points,Total Points"]
+        await interaction.response.defer(ephemeral=True)
+
+        files = []
+
+        player_lines = ["Username,Discord ID,PVM Points,Community Points,Total Points"]
         for p in players:
             total = p["pvm_points"] + p["community_points"]
-            lines.append(f"{p['username']},{p['user_id']},{p['pvm_points']},{p['community_points']},{total}")
+            player_lines.append(f"{p['username']},{p['user_id']},{p['pvm_points']},{p['community_points']},{total}")
+        if players:
+            files.append(
+                discord.File(
+                    io.BytesIO("\n".join(player_lines).encode()),
+                    filename="players.csv",
+                )
+            )
 
-        csv_content = "\n".join(lines)
-        file = discord.File(io.BytesIO(csv_content.encode()), filename="clan_points.csv")
+        if submissions:
+            sub_lines = [
+                "ID,Submitter ID,Status,Reviewed By,Players,PVM Points,Participant Points,Created At"
+            ]
+            for s in submissions:
+                sub_lines.append(
+                    f"{s['id']},{s['user_id']},{s['status']},{s['reviewed_by'] or ''},"
+                    f"\"{s['players']}\",{s['pvm_points']},{s['participant_points']},{s['created_at']}"
+                )
+            files.append(
+                discord.File(
+                    io.BytesIO("\n".join(sub_lines).encode()),
+                    filename="submissions.csv",
+                )
+            )
 
-        embed = discord.Embed(
-            title="✅ Data Exported",
-            description=f"**{len(players)}** players exported to CSV.",
-            color=discord.Color.green(),
-        )
-        embed.set_footer(text="Indigo Bot • OSRS Clan Points System")
+        item_lines = ["Name,Value"]
+        for i in items:
+            item_lines.append(f"{i['name']},{i['value']}")
+        if items:
+            files.append(
+                discord.File(
+                    io.BytesIO("\n".join(item_lines).encode()),
+                    filename="items.csv",
+                )
+            )
 
-        await interaction.response.send_message(embed=embed, file=file)
+        try:
+            dm = await interaction.user.create_dm()
+            dm_embed = discord.Embed(
+                title="✅ Database Export",
+                description=(
+                    f"Here is the full database export.\n"
+                    f"**Players:** `{len(players)}`\n"
+                    f"**Submissions:** `{len(submissions)}`\n"
+                    f"**Items:** `{len(items)}`"
+                ),
+                color=discord.Color.green(),
+            )
+            dm_embed.set_footer(text="Indigo Bot • OSRS Clan Points System")
+            await dm.send(embed=dm_embed, files=files)
+
+            embed = discord.Embed(
+                title="✅ Data Exported",
+                description=f"Sent **{len(players)}** players, **{len(submissions)}** submissions, and **{len(items)}** items to your DMs.",
+                color=discord.Color.green(),
+            )
+            embed.set_footer(text="Check your DMs for the spreadsheet files.")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        except discord.Forbidden:
+            embed = discord.Embed(
+                title="❌ DM Failed",
+                description="I couldn't send you a DM. Please enable DMs from server members and try again.",
+                color=discord.Color.red(),
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
     @app_commands.command(name="sync", description="Force sync slash commands (admin only)")
     @app_commands.checks.has_permissions(administrator=True)
