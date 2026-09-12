@@ -1,4 +1,5 @@
 import os
+import logging
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -7,6 +8,8 @@ from database import init_db
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
+
+logging.getLogger("discord.ext.commands.bot").setLevel(logging.CRITICAL)
 
 intents = discord.Intents.default()
 
