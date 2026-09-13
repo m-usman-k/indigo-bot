@@ -12,6 +12,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 logging.getLogger("discord.ext.commands.bot").setLevel(logging.CRITICAL)
 
 intents = discord.Intents.default()
+intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
