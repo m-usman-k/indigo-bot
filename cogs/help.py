@@ -64,7 +64,9 @@ def build_category_embed(category: str):
                 "↳ The player with the drop earns the **main points**.\n"
                 "↳ Everyone else in the fight earns the **participant points**.\n\n"
                 "**Community Points**\n"
-                "↳ Every raid gets an extra **`5` community points per player**.\n"
+                "↳ Group raids get an extra **`5` community points per player** "
+                "(only when more than one player is in the submission).\n"
+                "↳ Solo submissions earn PVM points only.\n"
                 "↳ Admins can also award them manually for events, contributions, etc."
             ),
             inline=False,
@@ -141,7 +143,8 @@ def build_category_embed(category: str):
                 "↳ **✅ Accept** — a modal opens asking:\n"
                 "   ↳ points for the **main player** (the drop owner)\n"
                 "   ↳ points for **each participant**\n"
-                "↳ The main player gets their points + **`5` community**.\n"
+                "↳ The main player gets their points + **`5` community** "
+                "(solo dumps get no community points).\n"
                 "↳ Each participant gets their points + **`5` community**.\n"
                 "↳ **❌ Deny** — the submission is marked denied."
             ),

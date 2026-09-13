@@ -410,25 +410,29 @@ class Verification(commands.Cog):
 
         submitter_id = sub["user_id"]
         participant_ids = [int(x) for x in (sub["participant_ids"] or "").split(",") if x]
+        participant_ids = [pid for pid in participant_ids if pid != submitter_id]
+        grouped = len(participant_ids) > 0
+        community = COMMUNITY_BONUS if grouped else 0
 
         awarded = []
         missing = []
 
         if db.get_player(submitter_id) is not None:
             db.add_pvm_points(submitter_id, main_points)
-            db.add_community_points(submitter_id, COMMUNITY_BONUS)
-            awarded.append((submitter_id, main_points, COMMUNITY_BONUS, "main"))
+            if grouped:
+                db.add_community_points(submitter_id, community)
+            awarded.append((submitter_id, main_points, community, "main"))
         else:
             missing.append(submitter_id)
 
         for pid in participant_ids:
-            if pid != submitter_id:
-                if db.get_player(pid) is not None:
-                    db.add_pvm_points(pid, participant_points)
-                    db.add_community_points(pid, COMMUNITY_BONUS)
-                    awarded.append((pid, participant_points, COMMUNITY_BONUS, "participant"))
-                else:
-                    missing.append(pid)
+            if db.get_player(pid) is not None:
+                db.add_pvm_points(pid, participant_points)
+                if grouped:
+                    db.add_community_points(pid, community)
+                awarded.append((pid, participant_points, community, "participant"))
+            else:
+                missing.append(pid)
 
         db.update_submission_status(sub_id, "verified", interaction.user.id)
         conn = db.get_connection()
@@ -441,8 +445,14 @@ class Verification(commands.Cog):
 
         confirmed_lines = [f"**#{sub_id} verified.**\n"]
         for pid, pts, cmm, role in awarded:
+            line = f"**{role}** (<@{pid}>) received **`{pts}`** PVM"
+            if grouped:
+                line += f" + **`{cmm}`** Community"
+            line += " points."
+            confirmed_lines.append(line)
+        if not grouped:
             confirmed_lines.append(
-                f"**{role}** (<@{pid}>) received **`{pts}`** PVM + **`{cmm}`** Community points."
+                "\nℹ️ Solo submission — no Community points to anyone."
             )
         if missing:
             confirmed_lines.append(
@@ -506,13 +516,19 @@ class Verification(commands.Cog):
             pass
 
     async def _notify_accepted(self, sub: dict, main_points: int, participant_points: int):
+        participant_ids = [int(x) for x in (sub["participant_ids"] or "").split(",") if x]
+        participant_ids = [pid for pid in participant_ids if pid != sub["user_id"]]
+        grouped = len(participant_ids) > 0
+        community = COMMUNITY_BONUS if grouped else 0
+        community_note = f" + **`{community}`** Community" if grouped else ""
+
         try:
             submitter = await self.bot.fetch_user(sub["user_id"])
             embed = discord.Embed(
                 title="🎉 Submission Accepted!",
                 description=(
                     f"Your submission `#{sub['id']}` was accepted.\n"
-                    f"You received **`{main_points}`** PVM + **`{COMMUNITY_BONUS}`** Community points."
+                    f"You received **`{main_points}`** PVM{community_note} points."
                 ),
                 color=discord.Color.green(),
             )
@@ -520,17 +536,14 @@ class Verification(commands.Cog):
         except discord.Forbidden:
             pass
 
-        participant_ids = [int(x) for x in (sub["participant_ids"] or "").split(",") if x]
         for pid in participant_ids:
-            if pid == sub["user_id"]:
-                continue
             try:
                 user = await self.bot.fetch_user(pid)
                 embed = discord.Embed(
                     title="🎉 Submission Accepted!",
                     description=(
                         f"Your clan submission `#{sub['id']}` was accepted.\n"
-                        f"You received **`{participant_points}`** PVM + **`{COMMUNITY_BONUS}`** Community points."
+                        f"You received **`{participant_points}`** PVM{community_note} points."
                     ),
                     color=discord.Color.green(),
                 )
