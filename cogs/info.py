@@ -132,8 +132,15 @@ class Info(commands.Cog):
             ),
             color=discord.Color.blurple(),
         )
+        embed.set_image(url="attachment://image1.png")
+        items_embed = discord.Embed(
+            title="Eligible items & point values",
+            description="The spreadsheet with every eligible drop item and its point value.",
+            color=discord.Color.blurple(),
+        )
+        items_embed.set_image(url="attachment://image2.png")
         await interaction.response.send_message(
-            embed=embed,
+            embeds=[embed, items_embed],
             files=[image("image1.png"), image("image2.png")],
             ephemeral=True,
         )
@@ -172,6 +179,7 @@ class Info(commands.Cog):
             ),
             color=discord.Color.blurple(),
         )
+        embed.set_image(url="attachment://image3.png")
         await interaction.response.send_message(
             embed=embed,
             files=[image("image3.png")],
