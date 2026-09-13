@@ -19,13 +19,14 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     init_db()
-    register_submission_views()
+    register_persistent_views()
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print("------")
 
 
-def register_submission_views():
+def register_persistent_views():
     from cogs.verification import SubmissionView
+    from cogs.info import IntroView
 
     count = 0
     for sub in get_pending_submissions():
@@ -41,6 +42,12 @@ def register_submission_views():
             pass
     if count:
         print(f"Registered {count} persistent submission views")
+
+    try:
+        bot.add_view(IntroView())
+        print("Registered persistent intro views")
+    except Exception:
+        pass
 
 
 async def setup_hook():
