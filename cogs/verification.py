@@ -162,16 +162,16 @@ class Verification(commands.Cog):
     @app_commands.command(name="submit_image", description="Submit a raid screenshot for PVM points")
     @app_commands.describe(
         image="The raid screenshot",
-        player1="Member 1 (up to 10 total)",
-        player2="Member 2 (up to 10 total)",
-        player3="Member 3 (up to 10 total)",
-        player4="Member 4 (up to 10 total)",
-        player5="Member 5 (up to 10 total)",
-        player6="Member 6 (up to 10 total)",
-        player7="Member 7 (up to 10 total)",
-        player8="Member 8 (up to 10 total)",
-        player9="Member 9 (up to 10 total)",
-        player10="Member 10 (up to 10 total)",
+        player1="Other member 1 (optional)",
+        player2="Other member 2 (optional)",
+        player3="Other member 3 (optional)",
+        player4="Other member 4 (optional)",
+        player5="Other member 5 (optional)",
+        player6="Other member 6 (optional)",
+        player7="Other member 7 (optional)",
+        player8="Other member 8 (optional)",
+        player9="Other member 9 (optional)",
+        player10="Other member 10 (optional)",
     )
     async def submit_image(
         self,
@@ -225,18 +225,6 @@ class Verification(commands.Cog):
                 continue
             seen.add(m.id)
             mentioned_members.append(m)
-
-        if len(mentioned_members) < 1:
-            embed = discord.Embed(
-                title="❌ No Players Mentioned",
-                description=(
-                    "Select at least 1 other player in the fight.\n"
-                    f"Max **{MAX_PLAYERS}** other players allowed."
-                ),
-                color=discord.Color.red(),
-            )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-            return
 
         if len(mentioned_members) > MAX_PLAYERS:
             embed = discord.Embed(

@@ -107,6 +107,7 @@ def build_category_embed(category: str):
                 "Run the command and pick each player in the `player` options:\n"
                 "↳ `/submit_image <image> player1:@Nathan player2:@Jeff player3:@Chris`\n\n"
                 "↳ Up to **10 players** can be selected (plus yourself = 11 total).\n"
+                "↳ Submitting solo is also allowed — just leave the player options empty.\n"
                 "↳ You must be on the clan roster to submit (ask an admin to add you).\n"
                 "↳ Your screenshot hash is checked so the same image can't be submitted twice."
             ),
