@@ -7,6 +7,11 @@ MAX_PLAYERS = 10
 COMMUNITY_BONUS = 5
 
 
+def _is_admin(interaction: discord.Interaction) -> bool:
+    user = interaction.user
+    return isinstance(user, discord.Member) and user.guild_permissions.administrator
+
+
 class PointsModal(discord.ui.Modal, title="Assign Points"):
     main_points_input = discord.ui.TextInput(
         label="Points for the main player",
@@ -53,6 +58,7 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
 
+        await interaction.response.defer(ephemeral=True)
         await cog.accept_submission(interaction, self.submission_id, main_pts, part_pts)
 
     async def on_error(self, interaction: discord.Interaction, error):
@@ -61,7 +67,10 @@ class PointsModal(discord.ui.Modal, title="Assign Points"):
             description="Something went wrong while processing your input.",
             color=discord.Color.red(),
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 class SubmissionView(discord.ui.View):
@@ -91,6 +100,15 @@ class SubmissionView(discord.ui.View):
         return interaction.client.get_cog("Verification")
 
     async def accept_callback(self, interaction: discord.Interaction):
+        if not _is_admin(interaction):
+            embed = discord.Embed(
+                title="❌ Admin Only",
+                description="Only admins can review submissions.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
         sub = db.get_submission(self.submission_id)
         if sub is None or sub["status"] != "pending":
             embed = discord.Embed(
@@ -105,6 +123,15 @@ class SubmissionView(discord.ui.View):
         await interaction.response.send_modal(modal)
 
     async def deny_callback(self, interaction: discord.Interaction):
+        if not _is_admin(interaction):
+            embed = discord.Embed(
+                title="❌ Admin Only",
+                description="Only admins can review submissions.",
+                color=discord.Color.red(),
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
         cog = self._cog(interaction)
         if cog is None:
             embed = discord.Embed(
@@ -118,6 +145,11 @@ class SubmissionView(discord.ui.View):
 
 
 def _review_embed(sub: dict, guild: discord.Guild, status: str = "pending"):
+    participant_ids = [int(x) for x in (sub["participant_ids"] or "").split(",") if x]
+    participant_ids = [pid for pid in participant_ids if pid != sub["user_id"]]
+    grouped = len(participant_ids) > 0
+    comm_note = f" + `{COMMUNITY_BONUS}` Community" if grouped else ""
+
     if status == "pending":
         color = discord.Color.orange()
         title = f"📬 New Submission — #{sub['id']}"
@@ -128,9 +160,11 @@ def _review_embed(sub: dict, guild: discord.Guild, status: str = "pending"):
         title = f"✅ Verified — #{sub['id']}"
         footer = "Accepted by " + (f"<@{sub['reviewed_by']}>" if sub["reviewed_by"] else "admin")
         description = (
-            f"**Main player:** `{sub['pvm_points']}` PVM + `{COMMUNITY_BONUS}` Community points\n"
-            f"**Each participant:** `{sub['participant_points']}` PVM + `{COMMUNITY_BONUS}` Community points"
+            f"**Main player:** `{sub['pvm_points']}` PVM{comm_note} points\n"
+            f"**Each participant:** `{sub['participant_points']}` PVM{comm_note} points"
         )
+        if not grouped:
+            description += "\n*Solo submission — no community points.*"
     else:
         color = discord.Color.red()
         title = f"❌ Denied — #{sub['id']}"
@@ -371,6 +405,12 @@ class Verification(commands.Cog):
             return
         await self.accept_submission(interaction, submission_id, main_points, participant_points)
 
+    async def _respond(self, interaction: discord.Interaction, embed: discord.Embed, ephemeral: bool = True):
+        if interaction.response.is_done():
+            await interaction.followup.send(embed=embed, ephemeral=ephemeral)
+        else:
+            await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
+
     async def accept_submission(
         self,
         interaction: discord.Interaction,
@@ -385,7 +425,7 @@ class Verification(commands.Cog):
                 description=f"No submission found with ID `{sub_id}`.",
                 color=discord.Color.red(),
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await self._respond(interaction, embed)
             return
         if sub["status"] != "pending":
             embed = discord.Embed(
@@ -393,7 +433,7 @@ class Verification(commands.Cog):
                 description=f"Submission `{sub_id}` has already been `{sub['status']}`.",
                 color=discord.Color.red(),
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await self._respond(interaction, embed)
             return
 
         submitter_id = sub["user_id"]
@@ -454,7 +494,7 @@ class Verification(commands.Cog):
             description="\n".join(confirmed_lines),
             color=discord.Color.green(),
         )
-        await interaction.response.send_message(embed=confirm_embed, ephemeral=True)
+        await self._respond(interaction, confirm_embed)
 
         await self._edit_review_message(interaction, sub, "verified")
         await self._notify_accepted(sub, main_points, participant_points)
@@ -491,6 +531,7 @@ class Verification(commands.Cog):
         await self._notify_denied(sub)
 
     async def _edit_review_message(self, interaction: discord.Interaction, sub: dict, status: str):
+        sub = db.get_submission(sub["id"]) or sub
         channel = interaction.guild.get_channel(sub["channel_id"]) if sub["channel_id"] else None
         if channel is None:
             return
